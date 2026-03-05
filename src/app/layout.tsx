@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ProtectorRutas from "@/components/ProtectorRutas";
 
 export const metadata: Metadata = {
   title: "Portal de Gestión | Fases de Desarrollo",
@@ -13,7 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        <ProtectorRutas>{children}</ProtectorRutas>
+      </body>
     </html>
   );
 }

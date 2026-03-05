@@ -2,26 +2,54 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { loginServicio } from "@/services/authServicio";
+import { obtenerContenidoErrorApi } from "@/lib/api/erroresApi";
+import MensajeEstado from "@/components/MensajeEstado";
+
+type EstadoMensaje = {
+  tipo: "success" | "error" | "warning" | "info";
+  titulo?: string;
+  mensaje: string;
+};
 
 export default function PaginaLogin() {
   const router = useRouter();
   const [correo_electronico, setCorreoElectronico] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [cargando, setCargando] = useState(false);
-  const [error_mensaje, setErrorMensaje] = useState("");
+  const [mensaje_estado, setMensajeEstado] = useState<EstadoMensaje | null>(null);
 
-  // Simula el proceso de autenticación. En el futuro se conectará con el backend.
+  // Valida si el correo cumple un formato estándar de email.
+  const esFormatoCorreoValido = (correo: string): boolean => {
+    const expresionCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return expresionCorreo.test(correo);
+  };
+
+  const correo_valido = correo_electronico.length > 0 && esFormatoCorreoValido(correo_electronico);
+  const correo_invalido = correo_electronico.length > 0 && !esFormatoCorreoValido(correo_electronico);
+
+  // Envía credenciales al backend y guarda sesión local mediante el servicio de autenticación.
   const manejarEnvio = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMensaje("");
+    setMensajeEstado(null);
     setCargando(true);
 
-    await new Promise((res) => setTimeout(res, 800));
-
-    if (correo_electronico === "admin@empresa.com" && contrasena === "1234") {
+    try {
+      // Objeto con credenciales que se envía al servicio de autenticación.
+      await loginServicio({
+        email: correo_electronico,
+        password: contrasena,
+      });
       router.push("/dashboard");
-    } else {
-      setErrorMensaje("Credenciales incorrectas. Prueba con admin@empresa.com / 1234");
+    } catch (error) {
+      const contenidoError = obtenerContenidoErrorApi(error);
+      // Objeto de estado para pintar la notificación visual de error en login.
+      setMensajeEstado({
+        tipo: "error",
+        titulo: contenidoError.titulo,
+        mensaje: contenidoError.mensaje,
+      });
+    } finally {
       setCargando(false);
     }
   };
@@ -50,9 +78,9 @@ export default function PaginaLogin() {
             className="w-16 h-16 rounded-3xl mx-auto flex items-center justify-center text-2xl font-bold text-gray-900 mb-4 shadow-lg"
             style={{ backgroundColor: "#F5F77E" }}
           >
-            PG
+            MM
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Portal de Gestión</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Mobel Manager</h1>
           <p className="text-sm text-gray-500 mt-1">Fases de desarrollo de productos</p>
         </div>
 
@@ -73,7 +101,13 @@ export default function PaginaLogin() {
                 onChange={(e) => setCorreoElectronico(e.target.value)}
                 placeholder="usuario@empresa.com"
                 required
-                className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-150"
+                className={`w-full px-4 py-3 text-sm border rounded-xl bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:bg-white transition-all duration-150 ${
+                  correo_valido
+                    ? "border-emerald-200 bg-emerald-50/70"
+                    : correo_invalido
+                    ? "border-red-200 bg-red-50/70"
+                    : "border-gray-200 bg-gray-50"
+                }`}
                 style={{ "--tw-ring-color": "#807EF7" } as React.CSSProperties}
               />
             </div>
@@ -94,11 +128,14 @@ export default function PaginaLogin() {
               />
             </div>
 
-            {/* Mensaje de error */}
-            {error_mensaje && (
-              <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-xs text-red-600">
-                {error_mensaje}
-              </div>
+            {/* Muestra feedback visual unificado para cualquier error de autenticación */}
+            {mensaje_estado && (
+              <MensajeEstado
+                tipo={mensaje_estado.tipo}
+                titulo={mensaje_estado.titulo}
+                mensaje={mensaje_estado.mensaje}
+                onClose={() => setMensajeEstado(null)}
+              />
             )}
 
             {/* Botón enviar */}
@@ -119,17 +156,10 @@ export default function PaginaLogin() {
             </button>
           </form>
 
-          {/* Credenciales de prueba */}
-          <div className="mt-6 p-3 rounded-xl bg-gray-50 border border-gray-100">
-            <p className="text-xs text-gray-400 text-center">
-              Demo: <span className="font-mono text-gray-600">admin@empresa.com</span> /{" "}
-              <span className="font-mono text-gray-600">1234</span>
-            </p>
-          </div>
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          © 2024 Portal de Gestión · Todos los derechos reservados
+          © 2024 Mobel Manager · Todos los derechos reservados
         </p>
       </div>
     </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { limpiarSesion } from "@/services/authServicio";
 
 type ElementoMenu = {
   etiqueta: string;
@@ -21,7 +22,14 @@ const elementosMenu: ElementoMenu[] = [
 ];
 
 export default function Sidebar() {
+  const enrutador = useRouter();
   const rutaActual = usePathname();
+
+  // Cierra sesión desde el menú lateral y redirige al login.
+  const manejarCerrarSesion = () => {
+    limpiarSesion();
+    enrutador.replace("/login");
+  };
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-100 flex flex-col z-40 shadow-sm">
@@ -35,7 +43,7 @@ export default function Sidebar() {
             PG
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-900">Portal Gestión</p>
+            <p className="text-sm font-semibold text-gray-900">Mobel Manager</p>
             <p className="text-xs text-gray-400">v1.0.0</p>
           </div>
         </div>
@@ -71,18 +79,14 @@ export default function Sidebar() {
 
       {/* Footer del sidebar */}
       <div className="px-6 py-4 border-t border-gray-100">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-gray-800"
-            style={{ backgroundColor: "#807EF7", color: "white" }}
-          >
-            JP
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-gray-900 truncate">Juan Pérez</p>
-            <p className="text-xs text-gray-400 truncate">Supervisor</p>
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={manejarCerrarSesion}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150 border border-gray-200"
+        >
+          <span>↩</span>
+          Salir
+        </button>
       </div>
     </aside>
   );
